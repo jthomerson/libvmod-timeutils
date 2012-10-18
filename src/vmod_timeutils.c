@@ -27,7 +27,6 @@
  */
 
 #include <stdlib.h>
-#include <pthread.h>
 
 #include "vrt.h"
 #include "bin/varnishd/cache.h"
@@ -50,4 +49,37 @@ const char * __match_proto__()
 vmod_version(struct sess *sp __attribute__((unused)))
 {
 	return VERSION;
+}
+
+const char * __match_proto__()
+vmod_expires_from_cache_control(struct sess *sp, double default_duration)
+{
+	char *header = VRT_GetHdr(sp, HDR_RESP, "\016cache-control:");
+	int max_age = -1;
+	int want_equals = 0;
+	if (header) {
+		while (*header != '\0') {
+			if (want_equals && *header == '=') {
+				header++;
+				max_age = strtoul(header, 0, 0);
+				break;
+			}
+
+			if (*header == 'm' && !memcmp(header, "max-age", 7)) {
+				header += 7;
+				want_equals = 1;
+				continue;
+			}
+			header++;
+		}
+	}
+	return vmod_rfc_format(sp, (TIM_real() + (max_age == -1 ? default_duration : max_age)));
+}
+
+const char * __match_proto__()
+vmod_rfc_format(struct sess *sp, double seconds_since_epoch)
+{
+	char buffer[60];
+	TIM_format(seconds_since_epoch, buffer);
+	return buffer;
 }
