@@ -56,19 +56,12 @@ vmod_expires_from_cache_control(struct sess *sp, double default_duration)
 {
 	char *header = VRT_GetHdr(sp, HDR_RESP, "\016cache-control:");
 	int max_age = -1;
-	int want_equals = 0;
 	if (header) {
 		while (*header != '\0') {
-			if (want_equals && *header == '=') {
-				header++;
+			if (*header == 'm' && !memcmp(header, "max-age=", 8)) {
+				header += 8;
 				max_age = strtoul(header, 0, 0);
 				break;
-			}
-
-			if (*header == 'm' && !memcmp(header, "max-age", 7)) {
-				header += 7;
-				want_equals = 1;
-				continue;
 			}
 			header++;
 		}
