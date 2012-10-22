@@ -72,7 +72,11 @@ vmod_expires_from_cache_control(struct sess *sp, double default_duration)
 const char * __match_proto__()
 vmod_rfc_format(struct sess *sp, double seconds_since_epoch)
 {
-	char buffer[60];
-	TIM_format(seconds_since_epoch, buffer);
-	return buffer;
+	char *u;
+	u = WS_Alloc(sp->wrk->ws, TIM_FORMAT_SIZE);
+	if (u == NULL) {
+		return (NULL);
+	}
+	TIM_format(seconds_since_epoch, u);
+	return u;
 }
